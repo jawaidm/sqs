@@ -1,4 +1,4 @@
-{%  extends 'boranga/emails/base_email.txt' %}
+{%  extends 'sqs/emails/base_email.txt' %}
 
 {%  block content %}
     The Application {{ proposal.lodgement_number }} has been assessed and has been recommended for approval.

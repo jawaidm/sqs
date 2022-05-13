@@ -1,4 +1,4 @@
-{%  extends 'boranga/emails/base_email.txt' %}
+{%  extends 'sqs/emails/base_email.txt' %}
 
 {%  block content %}
         A referral for Application {{proposal.lodgement_number}} has been completed ({{completed_by}}): 

@@ -3,8 +3,8 @@
 # Install Boranga Project
 ```
  cd /var/www
- git clone https://github.com/dbca-wa/boranga.git
- cd boranga
+ git clone https://github.com/dbca-wa/sqs.git
+ cd sqs
 
  virtualenv venv
  . venv/bin/activate
@@ -24,25 +24,25 @@
  postgres=# ALTER ROLE test LOGIN;
  ALTER ROLE
 
- postgres=# create database boranga_dev;
+ postgres=# create database sqs_dev;
  CREATE DATABASE
 
  postgres=# quit
 
  # Check Connection to new DB
- /var/www/boranga$ psql -U test -W -h localhost -d boranga_dev -p 5432
+ /var/www/sqs$ psql -U test -W -h localhost -d sqs_dev -p 5432
  Password: 
 
  psql (12.9 (Ubuntu 12.9-0ubuntu0.20.04.1))
  SSL connection (protocol: TLSv1.3, cipher: TLS_AES_256_GCM_SHA384, bits: 256, compression: off)
  Type "help" for help.
 
- boranga_dev=# 
+ sqs_dev=# 
 ```
 
 ## Add in .env
 ```
- DATABASE_URL="postgis://test:my_passwd@localhost:5432/boranga_dev"
+ DATABASE_URL="postgis://test:my_passwd@localhost:5432/sqs_dev"
  
  ./apply_initial_migrations.sh
  
@@ -50,11 +50,11 @@
  EmailUserRO.objects.get(email='firstname.lastname@dbca.wa.gov.au')
  
  # Build NPM
- cd /var/www/boranga/boranga/frontend/boranga
+ cd /var/www/sqs/sqs/frontend/sqs
  npm install
  npm run build
  
- cd /var/www/boranga/boranga
+ cd /var/www/sqs/sqs
  ./manage.py collectstatic --noinput
  ./manage.py runserver 0.0.0.0:8000
  
@@ -70,12 +70,12 @@ NOTE:
 
 ```  
 DEBUG=True
-DATABASE_URL="postgis://test:my_passwd@localhost:5432/boranga_dev"
-LEDGER_DATABASE_URL='postgis://test:my_passwd@localhost:5432/boranga_dev'
+DATABASE_URL="postgis://test:my_passwd@localhost:5432/sqs_dev"
+LEDGER_DATABASE_URL='postgis://test:my_passwd@localhost:5432/sqs_dev'
 LEDGER_API_URL="http://localhost:8000"
 LEDGER_API_KEY="ledger_api_key__from__ledger_api_admin"
 SYSTEM_GROUPS=['Boranga Admin']
-SITE_PREFIX='boranga-dev'
+SITE_PREFIX='sqs-dev'
 SITE_DOMAIN='dbca.wa.gov.au'
 SECRET_KEY='SECRET_KEY_YO'
 PRODUCTION_EMAIL=False

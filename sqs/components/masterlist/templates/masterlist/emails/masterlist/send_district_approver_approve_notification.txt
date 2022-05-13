@@ -1,4 +1,4 @@
-{%  extends 'boranga/emails/base_email.txt' %}
+{%  extends 'sqs/emails/base_email.txt' %}
 
 {%  block content %}
     The commercial filming lawful authority application {{ proposal.lodgement_number }} for the {{ district_proposal.district_name }} district has been assessed and recommended for your approval.

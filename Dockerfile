@@ -1,5 +1,5 @@
 # Prepare the base environment.
-FROM ubuntu:20.04 as builder_base_boranga
+FROM ubuntu:20.04 as builder_base_sqs
 MAINTAINER asi@dbca.wa.gov.au
 ENV DEBIAN_FRONTEND=noninteractive
 ENV DEBUG=True
@@ -27,7 +27,7 @@ RUN ln -s /usr/bin/python3 /usr/bin/python
 #RUN ln -s /usr/bin/pip3 /usr/bin/pip
 RUN pip install --upgrade pip
 # Install Python libs from requirements.txt.
-FROM builder_base_boranga as python_libs_boranga
+FROM builder_base_sqs as python_libs_sqs
 WORKDIR /app
 COPY requirements.txt ./
 RUN pip3 install --no-cache-dir -r requirements.txt \
@@ -37,7 +37,7 @@ RUN pip3 install --no-cache-dir -r requirements.txt \
   && rm -rf /var/lib/{apt,dpkg,cache,log}/ /tmp/* /var/tmp/*
 
 # Install the project (ensure that frontend projects have been built prior to this step).
-FROM python_libs_boranga
+FROM python_libs_sqs
 COPY timezone /etc/timezone
 ENV TZ=Australia/Perth
 RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
@@ -56,9 +56,9 @@ RUN service cron start
 RUN chmod 755 /startup.sh
 COPY gunicorn.ini manage.py ./
 RUN touch /app/.env
-COPY boranga ./boranga
-#RUN mkdir /app/boranga/cache/
-#RUN chmod 777 /app/boranga/cache/
+COPY sqs ./sqs
+#RUN mkdir /app/sqs/cache/
+#RUN chmod 777 /app/sqs/cache/
 RUN python manage.py collectstatic --noinput
 RUN apt-get install --no-install-recommends -y python-pil
 EXPOSE 8080

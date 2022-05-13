@@ -1,4 +1,4 @@
-{%  extends 'boranga/emails/base_email.txt' %}
+{%  extends 'sqs/emails/base_email.txt' %}
 
 {%  block content %}
     The commercial filming lawful authority application {{ proposal.lodgement_number }} for {{  district_proposal.district_name }} district has been sent back by approver.
