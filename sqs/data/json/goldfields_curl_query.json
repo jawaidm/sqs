@@ -1,7 +1,12 @@
 {
-  "names": [
-    "office",
-    "region"
+  "layers": [
+    {	  
+      "type_name": "cddp:dpaw_regions",
+      "names": [
+          "office",
+          "region"
+      ]
+    }
   ],
   "geojson": {
     "type": "FeatureCollection",

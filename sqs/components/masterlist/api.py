@@ -55,8 +55,34 @@ class LayerViewSet(viewsets.ReadOnlyModelViewSet):
     def layer(self, request, *args, **kwargs):            
         """ http://localhost:8002/api/layers/50/layer.json """
         instance = self.get_object()
-        serializer = self.get_serializer(instance) 
+        seture_featuresrializer = self.get_serializer(instance) 
         return Response(serializer.data)
+
+    @action(detail=False, methods=['POST',]) # POST because request will contain GeoJSON polygon to intersect with layer stored on SQS
+    def spatial_query(self, request, *args, **kwargs):            
+        """ 
+        http://localhost:8002/api/layers/intersect.json 
+
+        curl -d @sqs/data/json/goldfields_curl_query.json -X POST http://localhost:8002/api/layers/intersect.json --header "Content-Type: application/json" --header "Accept: application/json"
+
+        or
+        curl -d '{"names":["office","region"],"geojson":{"type":"FeatureCollection","features":[{"type":"Feature","properties":{},"geometry":{"type":"Polygon","coordinates":[[[124.12353515624999,-30.391830328088137],[124.03564453125,-31.672083485607377],[126.69433593749999,-31.615965936476076],[127.17773437499999,-29.688052749856787],[124.12353515624999,-30.391830328088137]]]}}]}}' -X POST http://localhost:8002/api/layers/intersect.json --header "Content-Type: application/json"
+
+        """
+        import ipdb; ipdb.set_trace()
+        names = request.data['layers'][0]['names']
+        type_name = request.data['layers'][0]['type_name']
+
+        geojson = request.data['geojson']
+        #layer = Layer.objects.filter(type=type_name.split(':')[0], name=type_name.split(':')[1])
+        layer = self.queryset.get(type_name=type_name)
+
+
+        helper=GeoQueryHelper(layer)
+        #res = helper.intersection(['region', 'office'], request.data)
+        res = helper.intersection(names, geojson)
+        return Response(res)
+
 
 
 class FeatureViewSet(viewsets.ReadOnlyModelViewSet):
@@ -68,7 +94,7 @@ class FeatureViewSet(viewsets.ReadOnlyModelViewSet):
         """ http://localhost:8002/api/layer_features/50/features.json """
         #import ipdb; ipdb.set_trace()
         instance = self.get_object()
-        qs = instance.feature_features.all()
+        qs = instance.features.all()
         qs.order_by('id')
         serializer = FeatureGeometrySerializer(qs,context={'request':request}, many=True)
         return Response(serializer.data)
@@ -86,6 +112,7 @@ class FeatureViewSet(viewsets.ReadOnlyModelViewSet):
         import ipdb; ipdb.set_trace()
         names = request.data['names']
         geojson = request.data['geojson']
+        type_name = request.data['type_name']
         layer = self.get_object()
 
 

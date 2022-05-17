@@ -17,6 +17,9 @@ LEDGER_PASS = env('LEDGER_PASS')
 SHOW_DEBUG_TOOLBAR = env('SHOW_DEBUG_TOOLBAR', False)
 BUILD_TAG = env('BUILD_TAG', hashlib.md5(os.urandom(32)).hexdigest())  # URL of the Dev app.js served by webpack & express
 
+# Use 'epsg:4326' as projected coordinate system - 'epcg:4326' coordinate system is in meters (Then the buffer distance will be in meters)
+CRS = env('CRS', 'epsg:4326')
+
 
 if env('CONSOLE_EMAIL_BACKEND', False):
    EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
@@ -49,6 +52,7 @@ INSTALLED_APPS += [
     'bootstrap3',
     'sqs',
     'sqs.components.masterlist',
+    #'reversion',
     'ledger_api_client',
 
 #    'taggit',

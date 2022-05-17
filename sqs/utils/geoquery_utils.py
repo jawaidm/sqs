@@ -42,7 +42,7 @@ class GeoQueryHelper():
              
                     #for region in DpawRegion.objects.filter(geom__intersects=geom):
                     #import ipdb; ipdb.set_trace()
-                    for feature in self.layer.feature_features.filter(geometry__intersects=geom):
+                    for feature in self.layer.features.filter(geometry__intersects=geom):
                         #intersection_geom.append(geom.intersection(feature.geometry))
                         intersection_geom.append(self.filter_dict(feature, required_attributes))
                         #print(feature)
@@ -59,6 +59,10 @@ class GeoQueryHelper():
             mpoly = gpd.read_file('sqs/data/json/goldfields.json')
         else:
             mpoly = gpd.read_file(json.dumps(mpoly))
+
+        # 
+        if mpoly.crs.srs != 'EPSG:4236':
+            mpoly.to_crs('EPSG:4236', inplace=True)
 
         layer_gdf = self.layer.layer_to_gdf
         layer_gdf.to_crs(mpoly.crs, inplace=True)

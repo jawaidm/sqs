@@ -51,7 +51,7 @@ class FeatureGeometrySerializer(GeoFeatureModelSerializer):
 
 
 class LayerSerializer(serializers.ModelSerializer):
-    #features = FeatureGeometrySerializer(source='feature_features', many=True, read_only=True)
+    #features = FeatureGeometrySerializer(source='features', many=True, read_only=True)
 
     class Meta:
         model = Layer

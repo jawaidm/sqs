@@ -20,7 +20,7 @@ class LayerLoader():
 
 
     In [23]: layer=Layer.objects.last()
-    In [25]: layer.feature_features.all().count()
+    In [25]: layer.features.all().count()
     Out[25]: 9
 
     In [25]: layer.srid
@@ -28,10 +28,11 @@ class LayerLoader():
 
     """
 
-    def __init__(self, url='https://kmi.dbca.wa.gov.au/geoserver/cddp/ows?service=WFS&version=1.0.0&request=GetFeature&typeName=cddp:dpaw_regions&maxFeatures=50&outputFormat=application%2Fjson', name='cddp:jm'):
+    def __init__(self, url='https://kmi.dbca.wa.gov.au/geoserver/cddp/ows?service=WFS&version=1.0.0&request=GetFeature&typeName=cddp:dpaw_regions&maxFeatures=50&outputFormat=application%2Fjson', type_name='cddp:dpaw_regions'):
         self.url = url
-        self.type = name.split(':')[0]
-        self.name = name.split(':')[1]
+        #self.type = name.split(':')[0]
+        #self.name = name.split(':')[1]
+        self.type_name = type_name
         
     def retrieve_layer(self):
         try:
@@ -55,19 +56,25 @@ class LayerLoader():
 
         #layer_gdf = gpd.read_file('sqs/data/json/dpaw_regions.json')
         #layer_gdf = gpd.read_file(io.BytesIO(geojson_str))
-        #import ipdb; ipdb.set_trace()
+        import ipdb; ipdb.set_trace()
 
-        #geojson = self.retrieve_layer()
-        #layer_gdf1 = gpd.read_file(json.dumps(geojson))
-        geojson = self.retrieve_layer_from_file()
+        geojson = self.retrieve_layer()
         layer_gdf1 = gpd.read_file(json.dumps(geojson))
+        #geojson = self.retrieve_layer_from_file()
+        #layer_gdf1 = gpd.read_file(json.dumps(geojson))
 
-        layer_qs = Layer.objects.filter(name=self.name, type=self.type, current=True)
+        # uniformly projected layers in DB (allows buffer in meters by default)
+        layer_gdf1.to_crs(settings.CRS, inplace=True) 
+
+        layer_qs = Layer.objects.filter(type_name=self.type_name, current=True)
         current_layer = None
         if layer_qs.count() == 1:
+            # check if this layer already exists in DB. If it does exist, return (do nothing) if it has NOT changed
+
             current_layer = layer_qs[0]
             #import ipdb; ipdb.set_trace()
             layer_gdf2 = gpd.read_file(json.dumps(current_layer.geojson))
+            layer_gdf2.to_crs(settings.CRS, inplace=True) 
 
             if not has_layer_changed(layer_gdf1, layer_gdf2):
                 # no change in geojson
@@ -79,19 +86,22 @@ class LayerLoader():
                 current_layer.current = False
                 current_layer.save()
 
-            layer = Layer.objects.create(name=self.name, type=self.type, geojson=geojson, current=True)
+            #import ipdb; ipdb.set_trace()
+            layer = Layer.objects.create(type_name=self.type_name, geojson=geojson, current=True)
 
             # create the layer features/geometries
-            for idx, row in layer_gdf1.iterrows():
-                #print(idx, row)
-                cols = list(row.keys())
-                cols.remove('geometry')
-                properties = row[cols].to_dict()
-                geom_str = str(row.geometry)
-                geometry = GEOSGeometry( geom_str )
-                feature = Feature.objects.create(properties=properties, geometry=geometry, layer=layer)
+#            for idx, row in layer_gdf1.iterrows():
+#                #print(idx, row)
+#                cols = list(row.keys())
+#                cols.remove('geometry')
+#                properties = row[cols].to_dict()
+#                geom_str = str(row.geometry)
+#                geometry = GEOSGeometry( geom_str )
+#                import ipdb; ipdb.set_trace()
+#                feature = Feature.objects.create(properties=properties, geometry=geometry, layer=layer)
 
-            logger.info(f'Created Layer: {layer}, with {layer.feature_features.count()} features, srid {layer.srid}') 
+            #import ipdb; ipdb.set_trace()
+            logger.info(f'Created Layer: {layer}, with {layer.features.count()} features, srid {layer.srid}') 
 
 
 def has_layer_changed(layer_gdf1, layer_gdf2):
