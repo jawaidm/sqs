@@ -6,6 +6,18 @@
           "office",
           "region"
       ]
+    },
+    {	  
+      "type_name": "cddp:local_gov_authority",
+      "names": [
+          "lga_label"
+      ]
+    },
+    {	  
+      "type_name": "cddp:threatened_priority_flora",
+      "names": [
+          "warank"
+      ]
     }
   ],
   "geojson": {
