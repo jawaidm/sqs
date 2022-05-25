@@ -52,60 +52,58 @@ class LayerLoader():
             raise
 
 
-    def load_layer(self):
+    def load_layer(self, geojson=None):
 
         #layer_gdf = gpd.read_file('sqs/data/json/dpaw_regions.json')
         #layer_gdf = gpd.read_file(io.BytesIO(geojson_str))
         import ipdb; ipdb.set_trace()
 
-        geojson = self.retrieve_layer()
-        layer_gdf1 = gpd.read_file(json.dumps(geojson))
-        #geojson = self.retrieve_layer_from_file()
-        #layer_gdf1 = gpd.read_file(json.dumps(geojson))
+        try:
+            if not geojson:
+                geojson = self.retrieve_layer()
+            layer_gdf1 = gpd.read_file(json.dumps(geojson))
+            #geojson = self.retrieve_layer_from_file()
+            #layer_gdf1 = gpd.read_file(json.dumps(geojson))
 
-        # uniformly projected layers in DB (allows buffer in meters by default)
-        layer_gdf1.to_crs(settings.CRS, inplace=True) 
+            # uniformly projected layers in DB (allows buffer in meters by default)
+            layer_gdf1.to_crs(settings.CRS, inplace=True) 
 
-        layer_qs = Layer.objects.filter(type_name=self.type_name, current=True)
-        current_layer = None
-        if layer_qs.count() == 1:
-            # check if this layer already exists in DB. If it does exist, return (do nothing) if it has NOT changed
+            layer_qs = Layer.objects.filter(type_name=self.type_name, current=True)
+            current_layer = None
+            msg = ''
+            if layer_qs.count() == 1:
+                # check if this layer already exists in DB. If it does exist, return (do nothing) if it has NOT changed
 
-            current_layer = layer_qs[0]
-            #import ipdb; ipdb.set_trace()
-            layer_gdf2 = gpd.read_file(json.dumps(current_layer.geojson))
-            layer_gdf2.to_crs(settings.CRS, inplace=True) 
+                current_layer = layer_qs[0]
+                #import ipdb; ipdb.set_trace()
+                layer_gdf2 = gpd.read_file(json.dumps(current_layer.geojson))
+                layer_gdf2.to_crs(settings.CRS, inplace=True) 
 
-            if not has_layer_changed(layer_gdf1, layer_gdf2):
-                # no change in geojson
-                logger.info(f'LAYER NOT UPDATED: No change in layer') 
-                return
+                if not has_layer_changed(layer_gdf1, layer_gdf2):
+                    # no change in geojson
+                    msg = f'LAYER NOT SAVED/UPDATED: No change in layer'
+                    logger.info(msg) 
+                    return msg
 
-        with transaction.atomic():
-            if current_layer:
-                current_layer.current = False
-                current_layer.save()
+            with transaction.atomic():
+                if current_layer:
+                    current_layer.current = False
+                    current_layer.save()
 
-            #import ipdb; ipdb.set_trace()
-            layer = Layer.objects.create(type_name=self.type_name, geojson=geojson, current=True)
+                #import ipdb; ipdb.set_trace()
+                layer = Layer.objects.create(type_name=self.type_name, geojson=geojson, current=True)
+                msg = f'Created Layer: {layer}, with {layer.features.count()} features, srid {layer.srid}'
+                logger.info(msg)
 
-            # create the layer features/geometries
-#            for idx, row in layer_gdf1.iterrows():
-#                #print(idx, row)
-#                cols = list(row.keys())
-#                cols.remove('geometry')
-#                properties = row[cols].to_dict()
-#                geom_str = str(row.geometry)
-#                geometry = GEOSGeometry( geom_str )
-#                import ipdb; ipdb.set_trace()
-#                feature = Feature.objects.create(properties=properties, geometry=geometry, layer=layer)
-
-            #import ipdb; ipdb.set_trace()
-            logger.info(f'Created Layer: {layer}, with {layer.features.count()} features, srid {layer.srid}') 
+        except Exception as e: 
+            raise repr(e)
+        
+        return  msg
 
 
 def has_layer_changed(layer_gdf1, layer_gdf2):
 
+    #import ipdb; ipdb.set_trace()
     # check columns are the same
     cols1 = list(layer_gdf1.columns.sort_values())
     cols2 = list(layer_gdf2.columns.sort_values())
@@ -118,7 +116,8 @@ def has_layer_changed(layer_gdf1, layer_gdf2):
     layer_gdf2 = layer_gdf2.loc[:, layer_gdf2.columns!='id'].sort_index(axis=1)
 
     # check geo dataframes are the same
-    if (layer_gdf1 == layer_gdf2).eq(True).all().eq(True).all():
+    #if (layer_gdf1 == layer_gdf2).eq(True).all().eq(True).all():
+    if layer_gdf1.equals(layer_gdf2):
         # GeoJSON has not changed
         return False
 

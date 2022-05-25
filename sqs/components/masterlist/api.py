@@ -18,7 +18,9 @@ import json
 
 from sqs.components.masterlist.models import Layer, LayerHistory, Feature
 from sqs.utils.geoquery_utils import LayerQueryHelper, PointQueryHelper
+from sqs.utils.loader_utils import LayerLoader
 from sqs.components.masterlist.serializers import GeoTestSerializer, LayerSerializer, FeatureGeometrySerializer
+
 
 import logging
 #logger = logging.getLogger('payment_checkout')
@@ -51,6 +53,29 @@ class LayerViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = Layer.objects.filter(current=True).order_by('id')
     serializer_class = LayerSerializer
 
+    @action(detail=False, methods=['POST',])
+    def add_layer(self, request, *args, **kwargs):            
+        """ 
+        curl -d @sqs/data/json/threatened_priority_flora.json -X POST http://localhost:8002/api/layers/add_layer.json --header "Content-Type: application/json" --header "Accept: application/json"
+        """
+        try:
+            #import ipdb; ipdb.set_trace()
+            layer_name = request.data['layer_name']
+            url = request.data['url']
+            geojson = request.data['geojson']
+
+            l = LayerLoader(url, layer_name)
+            res = l.load_layer(geojson)
+            return Response(res)
+        except KeyError as e:
+            #return Response(repr(e))
+            raise repr(e)
+        except Exception as e:
+            #return Response(str(e))
+            raise str(e)
+
+
+
     @action(detail=True, methods=['GET',])
     def layer(self, request, *args, **kwargs):            
         """ http://localhost:8002/api/layers/50/layer.json """
@@ -69,10 +94,10 @@ class LayerViewSet(viewsets.ReadOnlyModelViewSet):
         curl -d '{"names":["office","region"],"geojson":{"type":"FeatureCollection","features":[{"type":"Feature","properties":{},"geometry":{"type":"Polygon","coordinates":[[[124.12353515624999,-30.391830328088137],[124.03564453125,-31.672083485607377],[126.69433593749999,-31.615965936476076],[127.17773437499999,-29.688052749856787],[124.12353515624999,-30.391830328088137]]]}}]}}' -X POST http://localhost:8002/api/layers/spatial_query.json --header "Content-Type: application/json"
 
         """
+        import ipdb; ipdb.set_trace()
         layer_data = request.data['layers']
         geojson = request.data['geojson']
 
-        import ipdb; ipdb.set_trace()
         helper = LayerQueryHelper(layer_data, geojson)
         #res = helper.intersection(['region', 'office'], request.data)
         res = helper.spatial_join()
